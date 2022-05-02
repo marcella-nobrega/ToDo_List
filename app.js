@@ -14,8 +14,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb+srv://admin-marcella:<test123>@cluster0.uhmvb.mongodb.net/todolistDB"
-);
+mongoose.connect("mongodb+srv://admin-marcella:<test123>@cluster0.uhmvb.mongodb.net/todolistDB");
 
 const itemSchema = {
   name: String
@@ -124,30 +123,36 @@ app.post("/", function(req, res) {
 });
 
 app.post("/delete", function(req, res) {
-      const checkedItemId = req.body.checkbox;
-      const listName = req.body.listName;
+  const checkedItemId = req.body.checkbox;
+  const listName = req.body.listName;
 
-      if (listName === "Today") {
-        Item.findByIdAndRemove(checkedItemId, function(err) {
-          if (!err) {
-            console.log("Successfully deleted checked item.");
+  if (listName === "Today") {
+    Item.findByIdAndRemove(checkedItemId, function(err) {
+      if (!err) {
+        console.log("Successfully deleted checked item.");
+      }
+    });
+    res.redirect("/");
+  } else {
+    List.findOneAndUpdate({
+        name: listName
+      }, {
+        $pull: {
+          items: {
+            _id: checkedItemId
           }
-        });
-        res.redirect("/");
-      } else {
-        List.findOneAndUpdate({
-            name: listName
-          }, {
-            $pull: {
-              items: {
-                _id: checkedItemId
-              }}},
-              function(err,foundList){if (!err) {
-                res.redirect("/" + listName);}}
+        }
+      },
+      function(err, foundList) {
+        if (!err) {
+          res.redirect("/" + listName);
+        }
+      }
 
 
-        );}
-        });
+    );
+  }
+});
 
 
 
@@ -155,17 +160,26 @@ app.post("/delete", function(req, res) {
 
 
 
-      app.get("/work", function(req, res) {
-        res.render("list", {
-          listTitle: "Work List",
-          newListItems: workItems
-        });
-      });
+app.get("/work", function(req, res) {
+  res.render("list", {
+    listTitle: "Work List",
+    newListItems: workItems
+  });
+});
 
-      app.get("/about", function(req, res) {
-        res.render("about");
-      });
+app.get("/about", function(req, res) {
+  res.render("about");
+});
 
-      app.listen(3000, function() {
-        console.log("Server started on port 3000");
-      });
+
+
+let port = process.env.PORT;
+if (port == null || port == "") {
+  port = 3000;
+}
+
+
+
+app.listen(port, function() {
+  console.log("Server started on port 3000");
+});
